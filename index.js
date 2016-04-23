@@ -1,6 +1,20 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var multer = require('multer');
+var Forecast = require('forecast');
+var await = require('asyncawait/await');
+
+// Initialize forecast.io API
+var forecast = new Forecast({
+	service: 'forecast.io',
+	key: '6fa331afaca19b963d8991a56c553351',
+	units: 'f',
+	cache: true,
+	ttl: {
+		minutes: 120,
+		seconds: 0
+	}
+});
 
 // For parsing multipart/form-data
 var upload = multer();
@@ -23,20 +37,30 @@ app.get('/', function (req, res) {
 app.post('/getData', function (req, res) {
 	console.log(req.body);
 	if ('latitude' in req.body && 'longitude' in req.body) {
-		var userLocation = {
-			latitude: req.body.latitude,
-			longitude: req.body.longitude
-		};
-
+		var userLocation = [
+			req.body.latitude,
+			req.body.longitude
+		];
 		var data = {};
 
 		// Populate response object
-		data.weather = getWeatherData(userLocation);
-		data.noFlyZone = isNoFlyZone(userLocation);
-		data.safetyLevel = computeSafetyLevel(data.weather, data.noFlyZone);
+		getWeatherData(userLocation, {
+			onsuccess: function(weatherData) {
+				data.weather = weatherData;
 
-		// Send data back to client
-		res.send(data);
+				// Send weather data back to client
+				res.send(data);
+			},
+			onerror: function() {
+				res.status(400).send({
+					error: 'Error getting data from forecast.io'
+				});
+			}
+		});
+
+		// data.noFlyZone = inNoFlyZone(userLocation);
+		// data.safetyLevel = computeSafetyLevel(data.weather, data.noFlyZone);
+
 	} else {
 		res.status(400).send({
 			error: 'Must specify latitude and longitude'
@@ -51,12 +75,21 @@ app.listen(3000, function () {
 
 
 
-// Data processing/fetching
-function getWeatherData(location) {
-	return {};
+// Retrieve weather information from coordinates
+function getWeatherData(location, callbacks) {
+	forecast.get(location, function(err, weather) {
+		if (err) {
+			callbacks.onerror();
+			return console.log(err);
+		}
+		var data = {};
+		data.current = weather.currently;
+		callbacks.onsuccess(data);
+	});
 }
 
-function isNoFlyZone(location) {
+// Check if location is within a no-fly zone
+function inNoFlyZone(location) {
 	return false;
 }
 

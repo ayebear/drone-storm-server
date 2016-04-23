@@ -6,7 +6,11 @@
 
 // Server response
 {
-	"safetyLevel": 0.85,
+	"safeToFly": true,
+	"reason": "Too sunny, could cause drone overheating.",
 	"noFlyZone": false,
-	"weather": {}
+	"weather": {
+		"precipitation": {},
+		"wind": {}
+	}
 }
