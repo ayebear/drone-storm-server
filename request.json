@@ -1,0 +1,12 @@
+// Client request
+{
+	"latitude": 79.345456,
+	"longitude": -32.897896
+}
+
+// Server response
+{
+	"safetyLevel": 0.85,
+	"noFlyZone": false,
+	"weather": {}
+}
