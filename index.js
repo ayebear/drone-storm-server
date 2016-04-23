@@ -42,7 +42,7 @@ app.post('/getData', function (req, res) {
 		];
 		var data = {};
 
-		// Populate response object
+		// Get weather data
 		getWeatherData(userLocation, {
 			onsuccess: function(weatherData) {
 				data.weather = weatherData;
@@ -78,11 +78,26 @@ app.listen(3000, function () {
 function getWeatherData(location, callbacks) {
 	forecast.get(location, function(err, weather) {
 		if (err) {
-			callbacks.onerror();
-			return console.log(err);
+			callbacks.onerror(err);
 		}
-		var data = {};
-		data.current = weather.currently;
+
+		// Extract data from forecast's JSON
+		var current = weather.currently;
+		var data = {
+			summary: current.summary,
+			icon: current.icon,
+			temperature: current.temperature,
+			precipitation: {
+				intensity: current.precipIntensity,
+				probability: current.precipProbability,
+				type: current.precipType
+			},
+			visibility: current.visibility,
+			wind: {
+				speed: current.windSpeed,
+				bearing: current.windBearing
+			}
+		};
 		callbacks.onsuccess(data);
 	});
 }
