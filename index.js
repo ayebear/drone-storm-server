@@ -2,7 +2,6 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 var Forecast = require('forecast');
-var await = require('asyncawait/await');
 
 // Initialize forecast.io API
 var forecast = new Forecast({
