@@ -28,6 +28,8 @@ app.post('/getData', function (req, res) {
 			longitude: req.body.longitude
 		};
 
+		var data = {};
+
 		// Populate response object
 		data.weather = getWeatherData(userLocation);
 		data.noFlyZone = isNoFlyZone(userLocation);
