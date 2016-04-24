@@ -156,10 +156,10 @@ function computeSafety(weather, noFlyZone) {
 		}
 	}
 	if (weather.temperature) {
-		if (weather.temperature > 38) {
+		if (weather.temperature > 100) {
 			safety.messages.push('Very high temperatures, your drone might overheat.');
 			dangerLevel += 0.1;
-		} else if (weather.temperature < 0) {
+		} else if (weather.temperature < 32) {
 			safety.messages.push('Below freezing temperatures, could negatively affect drone flight time and performance.');
 			dangerLevel += 0.1;
 		}
