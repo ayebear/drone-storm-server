@@ -120,6 +120,12 @@ function getWeatherData(location, callbacks) {
 				bearing: current.windBearing
 			}
 		};
+
+		// Not sure why temperature was negative, hopefully this fixes it
+		if (data.temperature < -20) {
+			data.temperature = -data.temperature;
+		}
+
 		callbacks.onsuccess(data);
 	});
 }
