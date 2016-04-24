@@ -2,6 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 var Forecast = require('forecast');
+var cors = require('cors');
 
 // Initialize forecast.io API
 var forecast = new Forecast({
@@ -20,6 +21,9 @@ var upload = multer();
 
 // Create express app
 var app = express();
+
+// Allow requests from other servers
+app.use(cors());
 
 // Setup middleware
 app.use(bodyParser.json()); // for parsing application/json
