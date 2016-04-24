@@ -47,7 +47,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 // Get server version
 app.get('/', function (req, res) {
 	res.send({
-		version: '1.1.0'
+		version: '1.2.0'
 	});
 });
 
@@ -70,7 +70,7 @@ app.post('/getData', function (req, res) {
 				inNoFlyZone(userLocation, function (err, count) {
 					console.log(count);
 					data.noFlyZone = (count > 0);
-					data.safetyLevel = computeSafetyLevel(data.weather, data.noFlyZone);
+					data.safety = computeSafety(data.weather, data.noFlyZone);
 
 					// Send all data back to client
 					res.send(data);
@@ -131,6 +131,37 @@ function inNoFlyZone(location, callback) {
 	collection.count({'geometry': {$near: {$geometry: {'type': 'Point', 'coordinates': location}, $maxDistance: 8000}}}, callback);
 }
 
-function computeSafetyLevel(weather, noFlyZone) {
-	return 0.5;
+function computeSafety(weather, noFlyZone) {
+	var safety = {
+		messages: [],
+		level: 1
+	};
+	if (noFlyZone) {
+		safety.messages.push('Caution: This location intersects a no-fly zone.');
+	}
+	if (weather.wind.speed) {
+		if (weather.wind.speed > 20) {
+			safety.messages.push('Dangerously high wind speeds, your drone could fly away!');
+		} else if (weather.wind.speed > 10) {
+			safety.messages.push('Be cautious of the wind.');
+		}
+	}
+	if (weather.temperature) {
+		if (weather.temperature > 100) {
+			safety.messages.push('Very high temperatures, your drone might overheat.');
+		} else if (weather.temperature < 32) {
+			safety.messages.push('Below freezing temperatures, could negatively affect drone flight time and performance.');
+		}
+	}
+	if (weather.visibility && weather.visibility < 30) {
+		safety.messages.push("Don't let your drone fade away in the distance.");
+	}
+	if (weather.precipitation.intensity && weather.precipitation.probability && weather.precipitation.probability > 0.6) {
+		if (weather.precipitation.intensity > 0.6) {
+			safety.messages.push('High chance of heavy storms: ' + weather.precipitation.type);
+		} else if (weather.precipitation.intensity > 0.3) {
+			safety.messages.push('High chance of light to medium storms: ' + weather.precipitation.type);
+		}
+	}
+	return safety;
 }
