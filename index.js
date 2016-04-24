@@ -136,32 +136,45 @@ function computeSafety(weather, noFlyZone) {
 		messages: [],
 		level: 1
 	};
+	var dangerLevel = 0;
 	if (noFlyZone) {
 		safety.messages.push('Caution: This location intersects a no-fly zone.');
+		dangerLevel += 1;
 	}
 	if (weather.wind.speed) {
 		if (weather.wind.speed > 20) {
 			safety.messages.push('Dangerously high wind speeds, your drone could fly away!');
+			dangerLevel += 0.3;
 		} else if (weather.wind.speed > 10) {
 			safety.messages.push('Be cautious of the wind.');
+			dangerLevel += 0.2;
 		}
 	}
 	if (weather.temperature) {
 		if (weather.temperature > 100) {
 			safety.messages.push('Very high temperatures, your drone might overheat.');
+			dangerLevel += 0.1;
 		} else if (weather.temperature < 32) {
 			safety.messages.push('Below freezing temperatures, could negatively affect drone flight time and performance.');
+			dangerLevel += 0.1;
 		}
 	}
 	if (weather.visibility && weather.visibility < 30) {
 		safety.messages.push("Don't let your drone fade away in the distance.");
+		dangerLevel += 0.1;
 	}
 	if (weather.precipitation.intensity && weather.precipitation.probability && weather.precipitation.probability > 0.6) {
 		if (weather.precipitation.intensity > 0.6) {
 			safety.messages.push('High chance of heavy storms: ' + weather.precipitation.type);
+			dangerLevel += 0.4;
 		} else if (weather.precipitation.intensity > 0.3) {
 			safety.messages.push('High chance of light to medium storms: ' + weather.precipitation.type);
+			dangerLevel += 0.2;
 		}
 	}
+	if (dangerLevel > 1) {
+		dangerLevel = 1;
+	}
+	safety.level = 1 - dangerLevel;
 	return safety;
 }
