@@ -1,0 +1,18 @@
+# Convert data to correct format
+jq --compact-output ".features" original/5_mile_airport.geojson > 5_mile_airport_jq.geojson
+jq --compact-output ".features" original/us_military.geojson > us_military_jq.geojson
+jq --compact-output ".features" original/us_national_park.geojson > us_national_park_jq.geojson
+
+
+# Import data into mongodb
+mongoimport --db dronestorm -c nofly4 --file "5_mile_airport_jq.geojson" --jsonArray -j 4
+mongoimport --db dronestorm -c nofly4 --file "us_military_jq.geojson" --jsonArray -j 4
+mongoimport --db dronestorm -c nofly4 --file "us_national_park_jq.geojson" --jsonArray -j 4
+
+
+# Build index in db
+db.nofly4.createIndex( { "geometry" : "2dsphere" } )
+
+
+# Query for locations
+db.nofly4.count({'geometry': {$near: {$geometry: {'type': "Point",'coordinates': [-76.7154639, 39.2496668]}, $maxDistance: 8000}}})
