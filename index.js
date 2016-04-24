@@ -23,7 +23,6 @@ MongoClient.connect(mongoDbUrl, function(err, db) {
 var forecast = new Forecast({
 	service: 'forecast.io',
 	key: '6fa331afaca19b963d8991a56c553351',
-	units: 'f',
 	cache: true,
 	ttl: {
 		minutes: 120,
@@ -151,10 +150,10 @@ function computeSafety(weather, noFlyZone) {
 		}
 	}
 	if (weather.temperature) {
-		if (weather.temperature > 100) {
+		if (weather.temperature > 38) {
 			safety.messages.push('Very high temperatures, your drone might overheat.');
 			dangerLevel += 0.1;
-		} else if (weather.temperature < 32) {
+		} else if (weather.temperature < 0) {
 			safety.messages.push('Below freezing temperatures, could negatively affect drone flight time and performance.');
 			dangerLevel += 0.1;
 		}
