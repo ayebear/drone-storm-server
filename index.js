@@ -3,6 +3,21 @@ var bodyParser = require('body-parser');
 var multer = require('multer');
 var Forecast = require('forecast');
 var cors = require('cors');
+var MongoClient = require('mongodb').MongoClient;
+
+var mongoDbUrl = 'mongodb://localhost:27017/dronestorm';
+var mongoDb = null;
+
+// Connect to MongoDB server
+MongoClient.connect(mongoDbUrl, function(err, db) {
+	if (!err) {
+		mongoDb = db;
+		console.log("Connected to MongoDB server");
+
+		// console.log("Closed connection.");
+		// db.close();
+	}
+});
 
 // Initialize forecast.io API
 var forecast = new Forecast({
@@ -32,7 +47,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x
 // Get server version
 app.get('/', function (req, res) {
 	res.send({
-		version: '1.0.0'
+		version: '1.1.0'
 	});
 });
 
@@ -41,8 +56,8 @@ app.post('/getData', function (req, res) {
 	console.log(req.body);
 	if ('latitude' in req.body && 'longitude' in req.body) {
 		var userLocation = [
-			req.body.latitude,
-			req.body.longitude
+			req.body.longitude,
+			req.body.latitude
 		];
 		var data = {};
 
@@ -51,8 +66,15 @@ app.post('/getData', function (req, res) {
 			onsuccess: function(weatherData) {
 				data.weather = weatherData;
 
-				// Send weather data back to client
-				res.send(data);
+				// Get no fly zone data
+				inNoFlyZone(userLocation, function (err, count) {
+					console.log(count);
+					data.noFlyZone = (count > 0);
+					data.safetyLevel = computeSafetyLevel(data.weather, data.noFlyZone);
+
+					// Send all data back to client
+					res.send(data);
+				});
 			},
 			onerror: function() {
 				res.status(400).send({
@@ -60,9 +82,6 @@ app.post('/getData', function (req, res) {
 				});
 			}
 		});
-
-		// data.noFlyZone = inNoFlyZone(userLocation);
-		// data.safetyLevel = computeSafetyLevel(data.weather, data.noFlyZone);
 
 	} else {
 		res.status(400).send({
@@ -107,8 +126,9 @@ function getWeatherData(location, callbacks) {
 }
 
 // Check if location is within a no-fly zone
-function inNoFlyZone(location) {
-	return false;
+function inNoFlyZone(location, callback) {
+	var collection = mongoDb.collection('nofly4');
+	collection.count({'geometry': {$near: {$geometry: {'type': 'Point', 'coordinates': location}, $maxDistance: 8000}}}, callback);
 }
 
 function computeSafetyLevel(weather, noFlyZone) {
